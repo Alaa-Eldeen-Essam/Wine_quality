@@ -1,6 +1,6 @@
 
 // Log to confirm script version
-console.log('Loaded script.js version: 2025-10-20-2');
+console.log('Loaded script.js version: 2025-10-20-3');
 
 const API_BASE_URL = 'http://localhost:8000';
 const API_KEY = ''; // Set if your API requires authentication
@@ -90,10 +90,12 @@ function setupFormSubmission() {
         try {
             const formData = new FormData(form);
             const features = Object.fromEntries(formData);
-            console.log('Form features:', features);
-            const featureValues = Object.keys(features).map(key => 
-                key === 'type_encoded' ? parseInt(features[key]) : parseFloat(features[key])
-            );
+            console.log('Raw form features:', features);
+            const featureValues = Object.keys(features).map(key => {
+                const value = key === 'type_encoded' ? parseInt(features[key]) : parseFloat(features[key]);
+                console.log(`Parsed ${key}: ${value}`);
+                return value;
+            });
             
             // Check for NaN values before sending to API
             if (featureValues.some(isNaN)) {
