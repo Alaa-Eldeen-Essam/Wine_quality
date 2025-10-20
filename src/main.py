@@ -18,15 +18,32 @@ app = FastAPI(
     version="1.0.0"
 )
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+STATIC_DIR = os.path.join(BASE_DIR, "static")  # Add this line
+
 # # Mount static files at /static
 # app.mount("/static", StaticFiles(directory=".", html=True), name="static")
+if os.path.exists(STATIC_DIR):
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+    logger.info(f"✓ Mounted static files from {STATIC_DIR}")
+else:
+    logger.warning(f"Static directory not found at {STATIC_DIR}")
 
-# Serve index.html at root
+# Add CORS middleware here (your existing code)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Root endpoint - serves index.html
 @app.get("/")
 async def serve_index():
-    index_path = os.path.join(BASE_DIR, "static", "index.html")
+    index_path = os.path.join(STATIC_DIR, "index.html")
     if not os.path.exists(index_path):
-        # Fallback to API info if index.html doesn't exist
         return {
             "message": "Model 4 Prediction API",
             "version": "1.0.0",
