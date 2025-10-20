@@ -1,7 +1,7 @@
 # Wine Quality Prediction API
 
 FastAPI backend for wine quality prediction using a trained neural network model.
- deployemont in railway https://your-app.railway.app/docs
+ deployemont in railway https://web-production-2ea7d.up.railway.app/
 ## 📋 Features
 
 - ✅ Single and batch prediction endpoints
