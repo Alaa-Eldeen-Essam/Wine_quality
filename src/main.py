@@ -2,8 +2,8 @@ from fastapi import FastAPI, HTTPException, Request, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from models import SinglePredictionRequest, BatchPredictionRequest, PredictionResponse, BatchPredictionResponse
-from preprocessing import preprocess_single, preprocess_batch
+from src.models import SinglePredictionRequest, BatchPredictionRequest, PredictionResponse, BatchPredictionResponse
+from src.preprocessing import preprocess_single, preprocess_batch
 import numpy as np
 import os
 import traceback
