@@ -65,27 +65,35 @@ SCALER_PATH = "scaler.pkl"
 def load_model_on_startup():
     """Load the Keras model and optional scaler on app startup."""
     try:
+        # Check if model file exists
+        if not os.path.exists(MODEL_PATH):
+            logger.error(f"Model file not found at {MODEL_PATH}")
+            logger.error(f"Current directory: {os.getcwd()}")
+            logger.error(f"Files in directory: {os.listdir('.')}")
+            app.state.model = None
+            app.state.model_loaded = False
+            return  # Don't crash, just set model to None
+        
         from tensorflow.keras.models import load_model
         app.state.model = load_model(MODEL_PATH)
         app.state.model_loaded = True
-        
-        # Store expected input shape for validation
         app.state.expected_features = app.state.model.input_shape[-1]
         
-        logger.info(f"Loaded model from {MODEL_PATH}")
-        logger.info(f"Expected input features: {app.state.expected_features}")
+        logger.info(f"✓ Loaded model from {MODEL_PATH}")
+        logger.info(f"✓ Expected input features: {app.state.expected_features}")
     except Exception as e:
         app.state.model = None
         app.state.model_loaded = False
         app.state.expected_features = None
         logger.error(f"Failed to load model: {e}")
         logger.error(traceback.format_exc())
+        # Don't raise - let app start anyway
 
-    # Load scaler if exists
+    # Load scaler
     try:
         if os.path.exists(SCALER_PATH):
             app.state.scaler = joblib.load(SCALER_PATH)
-            logger.info(f"Loaded scaler from {SCALER_PATH}")
+            logger.info(f"✓ Loaded scaler from {SCALER_PATH}")
         else:
             app.state.scaler = None
             logger.info("No scaler found; running raw preprocessing")
@@ -93,12 +101,12 @@ def load_model_on_startup():
         app.state.scaler = None
         logger.error(f"Failed to load scaler: {e}")
     
-    # Initialize SHAP explainer once at startup (if shap is available)
+    # Initialize SHAP
     try:
         import shap
-        app.state.shap_explainer = None  # Will be initialized on first use
+        app.state.shap_explainer = None
         app.state.shap_available = True
-        logger.info("SHAP is available for explanations")
+        logger.info("SHAP is available")
     except ImportError:
         app.state.shap_available = False
         logger.info("SHAP not available")
@@ -353,4 +361,5 @@ def _interpret_prediction(preds):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.environ.get("PORT", 8000))  # Railway sets PORT
+    uvicorn.run(app, host="0.0.0.0", port=port)
