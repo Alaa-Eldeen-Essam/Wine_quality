@@ -110,3 +110,7 @@ ValueError: X has 11 features, but StandardScaler is expecting 12 features as in
 2025-10-20 17:46:12,521 - INFO - Expected input features: 12
 2025-10-20 17:46:12,540 - INFO - Loaded scaler from scaler.pkl
 2025-10-20 17:46:13,237 - INFO - SHAP is available for explanations
+2025-10-20 18:03:07,984 - INFO - Loaded model from model_4.h5
+2025-10-20 18:03:07,985 - INFO - Expected input features: 12
+2025-10-20 18:03:08,017 - INFO - Loaded scaler from scaler.pkl
+2025-10-20 18:03:08,948 - INFO - SHAP is available for explanations
