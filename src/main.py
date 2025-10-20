@@ -18,13 +18,13 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Mount static files at /static
-app.mount("/static", StaticFiles(directory=".", html=True), name="static")
+# # Mount static files at /static
+# app.mount("/static", StaticFiles(directory=".", html=True), name="static")
 
 # Serve index.html at root
 @app.get("/")
 async def serve_index():
-    return FileResponse("index.html")
+    return FileResponse(r"src\static\index.html")
 
 # CORS - Allow Railway domain
 app.add_middleware(
