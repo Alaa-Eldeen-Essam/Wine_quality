@@ -19,17 +19,17 @@ app = FastAPI(
 )
 
 # Mount static files at /static
-app.mount("/static", StaticFiles(directory=".", html=True), name="static")
+# app.mount("/static", StaticFiles(directory=".", html=True), name="static")
 
 # Serve index.html at root
 # @app.get("/")
 # async def serve_index():
 #     return FileResponse("index.html")
 
-# CORS
+# CORS - Allow Railway domain
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8000"],
+    allow_origins=["*"],  # In production, specify your actual domains
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -58,18 +58,25 @@ logger = logging.getLogger("prediction_api")
 logger.setLevel(logging.INFO)
 logger.addHandler(handler)
 
-MODEL_PATH = "model_4.h5"
-SCALER_PATH = "scaler.pkl"
+# Get the directory where this file is located
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "model_4.h5")
+SCALER_PATH = os.path.join(BASE_DIR, "scaler.pkl")
 
 @app.on_event("startup")
 def load_model_on_startup():
     """Load the Keras model and optional scaler on app startup."""
     try:
+        # Debug info
+        logger.info(f"Current working directory: {os.getcwd()}")
+        logger.info(f"Base directory: {BASE_DIR}")
+        logger.info(f"Looking for model at: {MODEL_PATH}")
+        logger.info(f"Files in base directory: {os.listdir(BASE_DIR)}")
+        
         # Check if model file exists
         if not os.path.exists(MODEL_PATH):
             logger.error(f"Model file not found at {MODEL_PATH}")
-            logger.error(f"Current directory: {os.getcwd()}")
-            logger.error(f"Files in directory: {os.listdir('.')}")
+            logger.error(f"Files in directory: {os.listdir(BASE_DIR)}")
             app.state.model = None
             app.state.model_loaded = False
             return  # Don't crash, just set model to None
@@ -96,7 +103,7 @@ def load_model_on_startup():
             logger.info(f"✓ Loaded scaler from {SCALER_PATH}")
         else:
             app.state.scaler = None
-            logger.info("No scaler found; running raw preprocessing")
+            logger.info(f"No scaler found at {SCALER_PATH}; running raw preprocessing")
     except Exception as e:
         app.state.scaler = None
         logger.error(f"Failed to load scaler: {e}")
@@ -111,13 +118,29 @@ def load_model_on_startup():
         app.state.shap_available = False
         logger.info("SHAP not available")
 
+@app.get("/")
+def root():
+    """Root endpoint."""
+    return {
+        "message": "Model 4 Prediction API",
+        "version": "1.0.0",
+        "endpoints": {
+            "health": "/health",
+            "predict": "/predict",
+            "predict_batch": "/predict_batch",
+            "model_info": "/model_info",
+            "explain": "/explain",
+            "docs": "/docs"
+        }
+    }
+
 @app.get("/health")
 def health_check():
     """Health check endpoint with detailed status."""
     return {
         "status": "healthy",
         "model_loaded": bool(getattr(app.state, 'model_loaded', False)),
-        "scaler_loaded": app.state.scaler is not None,
+        "scaler_loaded": getattr(app.state, 'scaler', None) is not None,
         "expected_features": getattr(app.state, 'expected_features', None)
     }
 
@@ -361,5 +384,5 @@ def _interpret_prediction(preds):
 
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.environ.get("PORT", 8000))  # Railway sets PORT
+    port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
