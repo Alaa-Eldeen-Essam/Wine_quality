@@ -24,7 +24,22 @@ app = FastAPI(
 # Serve index.html at root
 @app.get("/")
 async def serve_index():
-    return FileResponse(r"src\static\index.html")
+    index_path = os.path.join(BASE_DIR, "static", "index.html")
+    if not os.path.exists(index_path):
+        # Fallback to API info if index.html doesn't exist
+        return {
+            "message": "Model 4 Prediction API",
+            "version": "1.0.0",
+            "endpoints": {
+                "health": "/health",
+                "predict": "/predict",
+                "predict_batch": "/predict_batch",
+                "model_info": "/model_info",
+                "explain": "/explain",
+                "docs": "/docs"
+            }
+        }
+    return FileResponse(index_path)
 
 # CORS - Allow Railway domain
 app.add_middleware(
