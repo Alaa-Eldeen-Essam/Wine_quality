@@ -1,8 +1,9 @@
 from fastapi import FastAPI, HTTPException, Request, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from models import SinglePredictionRequest, BatchPredictionRequest, PredictionResponse, BatchPredictionResponse
-from preprocessing import preprocess_single, preprocess_batch, load_scaler_if_exists
+from preprocessing import preprocess_single, preprocess_batch
 import numpy as np
 import os
 import traceback
@@ -11,14 +12,24 @@ from logging.handlers import RotatingFileHandler
 from typing import Optional
 import joblib
 
-app = FastAPI(title="Model 4 Prediction API",
-              description="FastAPI app serving model_4.h5 with prediction endpoints",
-              version="1.0.0")
+app = FastAPI(
+    title="Model 4 Prediction API",
+    description="FastAPI app serving model_4.h5 with prediction endpoints and static frontend files",
+    version="1.0.0"
+)
+
+# Mount static files at /static
+app.mount("/static", StaticFiles(directory=".", html=True), name="static")
+
+# Serve index.html at root
+@app.get("/")
+async def serve_index():
+    return FileResponse("static/index.html")
 
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:8000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -32,7 +43,10 @@ def get_api_key(request: Request):
         return True
     key = request.headers.get("x-api-key")
     if not key or key != API_KEY:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or missing API Key")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, 
+            detail="Invalid or missing API Key"
+        )
     return True
 
 # Logging
@@ -51,14 +65,19 @@ SCALER_PATH = "scaler.pkl"
 def load_model_on_startup():
     """Load the Keras model and optional scaler on app startup."""
     try:
-        # Lazy import to avoid heavy imports at module import time
         from tensorflow.keras.models import load_model
         app.state.model = load_model(MODEL_PATH)
         app.state.model_loaded = True
+        
+        # Store expected input shape for validation
+        app.state.expected_features = app.state.model.input_shape[-1]
+        
         logger.info(f"Loaded model from {MODEL_PATH}")
+        logger.info(f"Expected input features: {app.state.expected_features}")
     except Exception as e:
         app.state.model = None
         app.state.model_loaded = False
+        app.state.expected_features = None
         logger.error(f"Failed to load model: {e}")
         logger.error(traceback.format_exc())
 
@@ -73,136 +92,265 @@ def load_model_on_startup():
     except Exception as e:
         app.state.scaler = None
         logger.error(f"Failed to load scaler: {e}")
-
+    
+    # Initialize SHAP explainer once at startup (if shap is available)
+    try:
+        import shap
+        app.state.shap_explainer = None  # Will be initialized on first use
+        app.state.shap_available = True
+        logger.info("SHAP is available for explanations")
+    except ImportError:
+        app.state.shap_available = False
+        logger.info("SHAP not available")
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy", "model_loaded": bool(getattr(app.state, 'model_loaded', False))}
-
+    """Health check endpoint with detailed status."""
+    return {
+        "status": "healthy",
+        "model_loaded": bool(getattr(app.state, 'model_loaded', False)),
+        "scaler_loaded": app.state.scaler is not None,
+        "expected_features": getattr(app.state, 'expected_features', None)
+    }
 
 @app.post("/predict", response_model=PredictionResponse)
-async def predict_single(payload: SinglePredictionRequest, ok: bool = Depends(get_api_key)):
+async def predict_single(
+    payload: SinglePredictionRequest, 
+    ok: bool = Depends(get_api_key)
+):
+    """Make a single prediction with input validation."""
     if not getattr(app.state, 'model_loaded', False):
         raise HTTPException(status_code=503, detail="Model not loaded")
+    
     try:
         features = payload.features
+        
+        # Validate input length
+        expected = app.state.expected_features
+        if expected and len(features) != expected:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Expected {expected} features, got {len(features)}"
+            )
+        
+        # Preprocess
         x = preprocess_single(features, scaler=getattr(app.state, 'scaler', None))
+        
+        # Validate for NaN/Inf after preprocessing
+        if not np.all(np.isfinite(x)):
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid feature values (NaN or Inf detected after preprocessing)"
+            )
+        
+        # Prediction
         model = app.state.model
-        # prediction
-        preds = model.predict(np.array([x]))
+        preds = model.predict(np.array([x]), verbose=0)
         probability, pred_class, class_name = _interpret_prediction(preds)
+        
         result = {
             "prediction": int(pred_class)+3,
             "probability": float(round(probability, 6)),
             "class_name": class_name
         }
-        logger.info(f"/predict - OK - input_len={len(features)} pred={pred_class} prob={probability}")
+        
+        logger.info(
+            f"/predict - OK - input_len={len(features)} "
+            f"pred={pred_class} prob={probability:.4f}"
+        )
         return result
+        
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"/predict - ERROR - {e}")
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @app.post("/predict_batch", response_model=BatchPredictionResponse)
-async def predict_batch(payload: BatchPredictionRequest, ok: bool = Depends(get_api_key)):
+async def predict_batch(
+    payload: BatchPredictionRequest, 
+    ok: bool = Depends(get_api_key)
+):
+    """Make batch predictions with validation."""
     if not getattr(app.state, 'model_loaded', False):
         raise HTTPException(status_code=503, detail="Model not loaded")
+    
     try:
         data = payload.data
+        
+        if not data:
+            raise HTTPException(status_code=400, detail="Empty data array")
+        
+        # Validate all inputs have same length
+        expected = app.state.expected_features
+        for idx, row in enumerate(data):
+            if expected and len(row) != expected:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Row {idx}: Expected {expected} features, got {len(row)}"
+                )
+        
+        # Preprocess
         X = preprocess_batch(data, scaler=getattr(app.state, 'scaler', None))
+        
+        # Validate for NaN/Inf
+        if not np.all(np.isfinite(X)):
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid feature values (NaN or Inf detected)"
+            )
+        
+        # Predictions
         model = app.state.model
-        preds = model.predict(X)
+        preds = model.predict(X, verbose=0)
+        
         results = []
         for p in preds:
             probability, pred_class, class_name = _interpret_prediction(p)
-            results.append({
-                "prediction": int(pred_class),
-                "probability": float(round(probability, 6)),
-                "class_name": class_name
-            })
+            results.append(
+                PredictionResponse(
+                    prediction=int(pred_class)+3,
+                    probability=float(round(probability, 6)),
+                    class_name=class_name
+                )
+            )
+        
         logger.info(f"/predict_batch - OK - n_samples={len(data)}")
-        return {"predictions": results}
+        return BatchPredictionResponse(predictions=results)
+        
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"/predict_batch - ERROR - {e}")
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @app.get("/model_info")
 def model_info():
+    """Get detailed model information."""
     if not getattr(app.state, 'model_loaded', False):
         raise HTTPException(status_code=503, detail="Model not loaded")
+    
     try:
         model = app.state.model
+        
+        # Get layer information
+        layers_info = []
+        for layer in model.layers:
+            layers_info.append({
+                "name": layer.name,
+                "type": layer.__class__.__name__,
+                "output_shape": str(layer.output_shape),
+                "params": layer.count_params()
+            })
+        
         info = {
-            "input_shape": getattr(model, 'input_shape', None),
-            "output_shape": getattr(model, 'output_shape', None),
-            "layers": [layer.__class__.__name__ for layer in model.layers]
+            "input_shape": str(model.input_shape),
+            "output_shape": str(model.output_shape),
+            "total_params": model.count_params(),
+            "trainable_params": sum([layer.count_params() for layer in model.layers if layer.trainable]),
+            "layers": layers_info,
+            "expected_features": getattr(app.state, 'expected_features', None)
         }
         return info
+        
     except Exception as e:
+        logger.error(f"/model_info - ERROR - {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @app.get("/feature_importance")
 def feature_importance():
-    # For neural networks there's no simple feature importance; user can plug SHAP
-    raise HTTPException(status_code=501, detail="Feature importance not implemented. Use /explain for SHAP-based explanations if available.")
-
+    """Feature importance endpoint (not applicable for neural networks)."""
+    raise HTTPException(
+        status_code=501, 
+        detail="Feature importance not directly available for neural networks. "
+               "Use /explain endpoint for SHAP-based explanations."
+    )
 
 @app.post("/explain")
 def explain(payload: SinglePredictionRequest):
-    """Return SHAP values for a single sample. Requires shap to be installed and compatible model."""
-    try:
-        import shap
-    except Exception:
-        raise HTTPException(status_code=501, detail="shap package is not installed on the server")
+    """
+    Return SHAP values for a single sample.
+    Note: First call may be slow as it initializes the explainer.
+    """
+    if not getattr(app.state, 'shap_available', False):
+        raise HTTPException(
+            status_code=501, 
+            detail="SHAP package is not installed on the server"
+        )
 
     if not getattr(app.state, 'model_loaded', False):
         raise HTTPException(status_code=503, detail="Model not loaded")
 
     try:
-        x = preprocess_single(payload.features, scaler=getattr(app.state, 'scaler', None))
-        model = app.state.model
-        # This is a simple approach; for large models or custom layers consider custom explainer
-        explainer = shap.Explainer(model, masker=x)
-        shap_values = explainer(np.array([x]))
-        return {"shap_values": shap_values.values.tolist()}
+        import shap
+        
+        # Preprocess input
+        x = preprocess_single(
+            payload.features, 
+            scaler=getattr(app.state, 'scaler', None)
+        )
+        x_array = np.array([x])
+        
+        # Initialize explainer if not already done (lazy initialization)
+        if app.state.shap_explainer is None:
+            logger.info("Initializing SHAP explainer (first call)...")
+            model = app.state.model
+            # Use a small background dataset (ideally load from saved file)
+            background = x_array  # In production, use proper background data
+            app.state.shap_explainer = shap.DeepExplainer(model, background)
+            logger.info("SHAP explainer initialized")
+        
+        # Calculate SHAP values
+        shap_values = app.state.shap_explainer.shap_values(x_array)
+        
+        # Format response
+        if isinstance(shap_values, list):
+            # Multi-class output
+            formatted_shap = [vals.tolist() for vals in shap_values]
+        else:
+            formatted_shap = shap_values.tolist()
+        
+        return {
+            "shap_values": formatted_shap,
+            "base_value": float(app.state.shap_explainer.expected_value) if hasattr(app.state.shap_explainer, 'expected_value') else None,
+            "features": payload.features
+        }
+        
     except Exception as e:
         logger.error(f"/explain - ERROR - {e}")
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 
-
 def _interpret_prediction(preds):
-    """Interpret model output (binary or multiclass).
+    """
+    Interpret model output (binary or multiclass).
     Returns (probability, predicted_class_index, class_name)
     """
-    # preds could be (1,1) sigmoid, (1,) or (n_classes,)
     arr = np.array(preds).squeeze()
+    
     if arr.ndim == 0:
-        # single value
+        # Single sigmoid output (binary classification)
         prob = float(arr)
         pred_class = 1 if prob >= 0.5 else 0
-        class_name = "Positive" if pred_class == 1 else "Negative"
+        class_name = f"Class_{pred_class+3}"
         return prob, pred_class, class_name
+        
     elif arr.ndim == 1:
-        # could be multiclass probabilities
-        if len(arr) == 2:
-            # binary probs for two classes
-            prob = float(arr[1])
-            pred_class = int(np.argmax(arr))
-            class_name = f"Class_{pred_class}"
-            return prob, pred_class, class_name
-        else:
-            pred_class = int(np.argmax(arr))
-            prob = float(arr[pred_class])
-            class_name = f"Class_{pred_class}"
-            return prob, pred_class, class_name
-    else:
-        # fallback
+        # Multiclass probabilities
         pred_class = int(np.argmax(arr))
-        prob = float(arr.flatten()[pred_class])
-        class_name = f"Class_{pred_class}"
+        prob = float(arr[pred_class])
+        class_name = f"Class_{pred_class+3}"
         return prob, pred_class, class_name
+    else:
+        # Fallback for unexpected shapes
+        arr_flat = arr.flatten()
+        pred_class = int(np.argmax(arr_flat))
+        prob = float(arr_flat[pred_class])
+        class_name = f"Class_{pred_class+3}"
+        return prob, pred_class, class_name
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

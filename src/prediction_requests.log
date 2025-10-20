@@ -36,3 +36,71 @@ ValueError: X has 11 features, but StandardScaler is expecting 12 features as in
 2025-10-20 15:44:24,979 - INFO - Loaded model from model_4.h5
 2025-10-20 15:44:24,989 - INFO - Loaded scaler from scaler.pkl
 2025-10-20 15:44:25,176 - INFO - /predict - OK - input_len=12 pred=2 prob=0.7689095139503479
+2025-10-20 15:48:48,858 - INFO - Loaded model from model_4.h5
+2025-10-20 15:48:48,885 - INFO - Loaded scaler from scaler.pkl
+2025-10-20 15:48:54,412 - INFO - Loaded model from model_4.h5
+2025-10-20 15:48:54,422 - INFO - Loaded scaler from scaler.pkl
+2025-10-20 15:49:01,224 - INFO - Loaded model from model_4.h5
+2025-10-20 15:49:01,235 - INFO - Loaded scaler from scaler.pkl
+2025-10-20 16:06:03,558 - INFO - Loaded model from model_4.h5
+2025-10-20 16:06:03,558 - INFO - Expected input features: 12
+2025-10-20 16:06:03,576 - INFO - Loaded scaler from scaler.pkl
+2025-10-20 16:06:04,694 - INFO - SHAP is available for explanations
+2025-10-20 16:06:12,909 - INFO - Loaded model from model_4.h5
+2025-10-20 16:06:12,910 - INFO - Expected input features: 12
+2025-10-20 16:06:12,919 - INFO - Loaded scaler from scaler.pkl
+2025-10-20 16:06:13,168 - INFO - SHAP is available for explanations
+2025-10-20 16:06:42,505 - INFO - Loaded model from model_4.h5
+2025-10-20 16:06:42,506 - INFO - Expected input features: 12
+2025-10-20 16:06:42,517 - INFO - Loaded scaler from scaler.pkl
+2025-10-20 16:06:42,818 - INFO - SHAP is available for explanations
+2025-10-20 16:08:35,250 - INFO - /predict - OK - input_len=12 pred=2 prob=0.7689
+2025-10-20 16:09:13,250 - INFO - Loaded model from model_4.h5
+2025-10-20 16:09:13,251 - INFO - Expected input features: 12
+2025-10-20 16:09:13,271 - INFO - Loaded scaler from scaler.pkl
+2025-10-20 16:09:13,873 - INFO - SHAP is available for explanations
+2025-10-20 16:13:34,197 - INFO - Loaded model from model_4.h5
+2025-10-20 16:13:34,198 - INFO - Expected input features: 12
+2025-10-20 16:13:34,217 - INFO - Loaded scaler from scaler.pkl
+2025-10-20 16:13:34,778 - INFO - SHAP is available for explanations
+2025-10-20 16:15:24,412 - INFO - /predict - OK - input_len=12 pred=2 prob=0.7689
+2025-10-20 16:27:47,886 - INFO - Loaded model from model_4.h5
+2025-10-20 16:27:47,887 - INFO - Expected input features: 12
+2025-10-20 16:27:47,918 - INFO - Loaded scaler from scaler.pkl
+2025-10-20 16:27:48,465 - INFO - SHAP is available for explanations
+2025-10-20 16:28:56,091 - INFO - Loaded model from model_4.h5
+2025-10-20 16:28:56,092 - INFO - Expected input features: 12
+2025-10-20 16:28:56,114 - INFO - Loaded scaler from scaler.pkl
+2025-10-20 16:28:56,799 - INFO - SHAP is available for explanations
+2025-10-20 16:29:01,290 - INFO - Loaded model from model_4.h5
+2025-10-20 16:29:01,291 - INFO - Expected input features: 12
+2025-10-20 16:29:01,304 - INFO - Loaded scaler from scaler.pkl
+2025-10-20 16:29:01,620 - INFO - SHAP is available for explanations
+2025-10-20 16:30:52,300 - INFO - Loaded model from model_4.h5
+2025-10-20 16:30:52,300 - INFO - Expected input features: 12
+2025-10-20 16:30:52,321 - INFO - Loaded scaler from scaler.pkl
+2025-10-20 16:30:52,872 - INFO - SHAP is available for explanations
+2025-10-20 16:34:06,986 - INFO - Loaded model from model_4.h5
+2025-10-20 16:34:06,986 - INFO - Expected input features: 12
+2025-10-20 16:34:07,035 - INFO - Loaded scaler from scaler.pkl
+2025-10-20 16:34:07,763 - INFO - SHAP is available for explanations
+2025-10-20 16:36:48,144 - INFO - Loaded model from model_4.h5
+2025-10-20 16:36:48,145 - INFO - Expected input features: 12
+2025-10-20 16:36:48,177 - INFO - Loaded scaler from scaler.pkl
+2025-10-20 16:36:48,728 - INFO - SHAP is available for explanations
+2025-10-20 16:40:33,065 - INFO - Loaded model from model_4.h5
+2025-10-20 16:40:33,066 - INFO - Expected input features: 12
+2025-10-20 16:40:33,085 - INFO - Loaded scaler from scaler.pkl
+2025-10-20 16:40:33,608 - INFO - SHAP is available for explanations
+2025-10-20 16:40:59,227 - INFO - Loaded model from model_4.h5
+2025-10-20 16:40:59,227 - INFO - Expected input features: 12
+2025-10-20 16:40:59,237 - INFO - Loaded scaler from scaler.pkl
+2025-10-20 16:40:59,523 - INFO - SHAP is available for explanations
+2025-10-20 16:43:08,952 - INFO - Loaded model from model_4.h5
+2025-10-20 16:43:08,953 - INFO - Expected input features: 12
+2025-10-20 16:43:08,969 - INFO - Loaded scaler from scaler.pkl
+2025-10-20 16:43:09,497 - INFO - SHAP is available for explanations
+2025-10-20 16:47:35,323 - INFO - Loaded model from model_4.h5
+2025-10-20 16:47:35,324 - INFO - Expected input features: 12
+2025-10-20 16:47:35,354 - INFO - Loaded scaler from scaler.pkl
+2025-10-20 16:47:35,871 - INFO - SHAP is available for explanations
