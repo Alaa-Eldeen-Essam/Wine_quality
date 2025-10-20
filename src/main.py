@@ -19,7 +19,7 @@ app = FastAPI(
 )
 
 # Mount static files at /static
-# app.mount("/static", StaticFiles(directory=".", html=True), name="static")
+app.mount("/static", StaticFiles(directory=".", html=True), name="static")
 
 # Serve index.html at root
 # @app.get("/")
