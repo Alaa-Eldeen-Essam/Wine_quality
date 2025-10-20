@@ -1,0 +1,38 @@
+2025-10-20 15:38:37,836 - INFO - Loaded model from model_4.h5
+2025-10-20 15:38:37,850 - INFO - Loaded scaler from scaler.pkl
+2025-10-20 15:40:56,127 - ERROR - /predict - ERROR - X has 11 features, but StandardScaler is expecting 12 features as input.
+2025-10-20 15:40:56,132 - ERROR - Traceback (most recent call last):
+  File "/mnt/d/Behoos_AI/AI for Military/Phase2/tasks/Wine_quality/src/preprocessing.py", line 25, in preprocess_single
+    x = scaler.transform(x.reshape(1, -1)).reshape(-1)
+  File "/home/alaa/miniconda3/envs/wine-quality/lib/python3.10/site-packages/sklearn/utils/_set_output.py", line 316, in wrapped
+    data_to_wrap = f(self, X, *args, **kwargs)
+  File "/home/alaa/miniconda3/envs/wine-quality/lib/python3.10/site-packages/sklearn/preprocessing/_data.py", line 1075, in transform
+    X = validate_data(
+  File "/home/alaa/miniconda3/envs/wine-quality/lib/python3.10/site-packages/sklearn/utils/validation.py", line 2975, in validate_data
+    _check_n_features(_estimator, X, reset=reset)
+  File "/home/alaa/miniconda3/envs/wine-quality/lib/python3.10/site-packages/sklearn/utils/validation.py", line 2839, in _check_n_features
+    raise ValueError(
+ValueError: X has 11 features, but StandardScaler is expecting 12 features as input.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/mnt/d/Behoos_AI/AI for Military/Phase2/tasks/Wine_quality/src/main.py", line 89, in predict_single
+    x = preprocess_single(features, scaler=getattr(app.state, 'scaler', None))
+  File "/mnt/d/Behoos_AI/AI for Military/Phase2/tasks/Wine_quality/src/preprocessing.py", line 28, in preprocess_single
+    x = scaler.transform(np.array([x]))[0]
+  File "/home/alaa/miniconda3/envs/wine-quality/lib/python3.10/site-packages/sklearn/utils/_set_output.py", line 316, in wrapped
+    data_to_wrap = f(self, X, *args, **kwargs)
+  File "/home/alaa/miniconda3/envs/wine-quality/lib/python3.10/site-packages/sklearn/preprocessing/_data.py", line 1075, in transform
+    X = validate_data(
+  File "/home/alaa/miniconda3/envs/wine-quality/lib/python3.10/site-packages/sklearn/utils/validation.py", line 2975, in validate_data
+    _check_n_features(_estimator, X, reset=reset)
+  File "/home/alaa/miniconda3/envs/wine-quality/lib/python3.10/site-packages/sklearn/utils/validation.py", line 2839, in _check_n_features
+    raise ValueError(
+ValueError: X has 11 features, but StandardScaler is expecting 12 features as input.
+
+2025-10-20 15:41:36,693 - INFO - /predict - OK - input_len=12 pred=2 prob=0.7689095139503479
+2025-10-20 15:43:11,301 - INFO - /predict - OK - input_len=12 pred=2 prob=0.7689095139503479
+2025-10-20 15:44:24,979 - INFO - Loaded model from model_4.h5
+2025-10-20 15:44:24,989 - INFO - Loaded scaler from scaler.pkl
+2025-10-20 15:44:25,176 - INFO - /predict - OK - input_len=12 pred=2 prob=0.7689095139503479
