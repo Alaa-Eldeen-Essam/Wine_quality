@@ -22,6 +22,9 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 STATIC_DIR = os.path.join(BASE_DIR, "static")  # Add this line
 
+# Ensure a logger object exists for early startup messages (handlers configured later)
+logger = logging.getLogger("prediction_api")
+
 # # Mount static files at /static
 # app.mount("/static", StaticFiles(directory=".", html=True), name="static")
 if os.path.exists(STATIC_DIR):
