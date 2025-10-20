@@ -1,7 +1,7 @@
 # Wine Quality Prediction API
 
 FastAPI backend for wine quality prediction using a trained neural network model.
-
+ deployemont in railway https://your-app.railway.app/docs
 ## 📋 Features
 
 - ✅ Single and batch prediction endpoints
@@ -189,14 +189,12 @@ Logs are stored in `prediction_requests.log` with automatic rotation:
 ### File Structure
 
 ```
-backend/
+src/
 ├── main.py                    # FastAPI application
 ├── models.py                  # Pydantic models
 ├── preprocessing.py           # Data preprocessing
 ├── requirements.txt           # Dependencies
 ├── README.md                  # Documentation
-├── test_api.py               # Test suite
-├── Dockerfile                # Docker configuration
 ├── model_4.h5                # Trained model
 ├── scaler.pkl                # Fitted scaler (optional)
 └── prediction_requests.log   # Log file

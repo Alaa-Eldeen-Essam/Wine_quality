@@ -1,9 +1,12 @@
-
 // Log to confirm script version
-console.log('Loaded script.js version: 2025-10-20-3');
+console.log('Loaded script.js version: 2025-10-20-4');
 
-const API_BASE_URL = 'http://localhost:8000';
+// Automatically detect API base URL
+// If running locally, use localhost. If deployed, use the same domain
+const API_BASE_URL = window.location.origin; // This will be the Railway URL when deployed
 const API_KEY = ''; // Set if your API requires authentication
+
+console.log('API Base URL:', API_BASE_URL);
 
 // Feature names mapping
 const FEATURE_NAMES = {
@@ -111,7 +114,8 @@ function setupFormSubmission() {
             });
             
             if (!response.ok) {
-                throw new Error(`API error: ${response.statusText}`);
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.detail || `API error: ${response.statusText}`);
             }
             
             const data = await response.json();
