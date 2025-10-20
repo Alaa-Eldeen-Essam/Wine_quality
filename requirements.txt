@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+tensorflow
+numpy
+pandas
+scikit-learn
+joblib
+python-dotenv
+slowapi
+shap
