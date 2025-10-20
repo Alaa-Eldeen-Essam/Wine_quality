@@ -1,0 +1,19 @@
+2025-10-20 18:03:40,952 - ERROR - Failed to load model: [Errno 2] Unable to synchronously open file (unable to open file: name = 'model_4.h5', errno = 2, error message = 'No such file or directory', flags = 0, o_flags = 0)
+2025-10-20 18:03:40,960 - ERROR - Traceback (most recent call last):
+  File "/mnt/d/Behoos_AI/AI for Military/Phase2/tasks/Wine_quality/src/main.py", line 69, in load_model_on_startup
+    app.state.model = load_model(MODEL_PATH)
+  File "/home/alaa/miniconda3/envs/wine-quality/lib/python3.10/site-packages/keras/src/saving/saving_api.py", line 196, in load_model
+    return legacy_h5_format.load_model_from_hdf5(
+  File "/home/alaa/miniconda3/envs/wine-quality/lib/python3.10/site-packages/keras/src/legacy/saving/legacy_h5_format.py", line 118, in load_model_from_hdf5
+    f = h5py.File(filepath, mode="r")
+  File "/home/alaa/miniconda3/envs/wine-quality/lib/python3.10/site-packages/h5py/_hl/files.py", line 566, in __init__
+    fid = make_fid(name, mode, userblock_size, fapl, fcpl, swmr=swmr)
+  File "/home/alaa/miniconda3/envs/wine-quality/lib/python3.10/site-packages/h5py/_hl/files.py", line 241, in make_fid
+    fid = h5f.open(name, flags, fapl=fapl)
+  File "h5py/_objects.pyx", line 54, in h5py._objects.with_phil.wrapper
+  File "h5py/_objects.pyx", line 55, in h5py._objects.with_phil.wrapper
+  File "h5py/h5f.pyx", line 104, in h5py.h5f.open
+FileNotFoundError: [Errno 2] Unable to synchronously open file (unable to open file: name = 'model_4.h5', errno = 2, error message = 'No such file or directory', flags = 0, o_flags = 0)
+
+2025-10-20 18:03:40,961 - INFO - No scaler found; running raw preprocessing
+2025-10-20 18:03:41,368 - INFO - SHAP is available for explanations
